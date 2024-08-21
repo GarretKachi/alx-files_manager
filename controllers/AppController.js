@@ -1,47 +1,20 @@
-const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
+const dbClient = require('../utils/db');
 
-// checks redis
-const checkRedisAlive = () => new Promise((resolve) => {
-  redisClient.ping((err, result) => {
-    resolve(result === 'PONG');
-  });
-});
+class AppController {
+  static async getStatus(req, res) {
+    const redisStatus = await redisClient.isAlive();
+    const dbStatus = await dbClient.isAlive();
 
-const AppController = {
-  async getStatus(req, res) {
-    try {
-      const [dbAlive, redisAlive] = await Promise.all([
-        dbClient.isAlive(),
-        checkRedisAlive(),
-      ]);
+    res.status(200).json({ redis: redisStatus, db: dbStatus });
+  }
 
-      res.status(200).json({
-        redis: redisAlive,
-        db: dbAlive,
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
+  static async getStats(req, res) {
+    const usersCount = await dbClient.nbUsers();
+    const filesCount = await dbClient.nbFiles();
 
-  async getStats(req, res) {
-    try {
-      const [usersCount, filesCount] = await Promise.all([
-        dbClient.nbUsers(),
-        dbClient.nbFiles(),
-      ]);
-
-      res.status(200).json({
-        users: usersCount,
-        files: filesCount,
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
-};
+    res.status(200).json({ users: usersCount, files: filesCount });
+  }
+}
 
 module.exports = AppController;
