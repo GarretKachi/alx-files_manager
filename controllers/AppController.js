@@ -1,23 +1,20 @@
-const redis = require('redis');
-const dbClient = require('../utils/db'); // Assuming db.js is in utils folder
-
-// Set up Redis client
-const redisClient = redis.createClient();
+const redisClient = require('../utils/redis');
+const dbClient = require('../utils/db');
 
 class AppController {
-  static async getStatus(req, res) {
-    const redisAlive = redisClient.connected;
-    const dbAlive = dbClient.isAlive();
+    static async getStatus(req, res) {
+        const redisStatus = await redisClient.isAlive();
+        const dbStatus = await dbClient.isAlive();
 
-    return res.status(200).json({ redis: redisAlive, db: dbAlive });
-  }
+        res.status(200).json({ redis: redisStatus, db: dbStatus });
+    }
 
-  static async getStats(req, res) {
-    const usersCount = await dbClient.nbUsers();
-    const filesCount = await dbClient.nbFiles();
+    static async getStats(req, res) {
+        const usersCount = await dbClient.nbUsers();
+        const filesCount = await dbClient.nbFiles();
 
-    return res.status(200).json({ users: usersCount, files: filesCount });
-  }
+        res.status(200).json({ users: usersCount, files: filesCount });
+    }
 }
 
 module.exports = AppController;
